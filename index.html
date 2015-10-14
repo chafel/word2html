@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>xml</title>
+    <script src="jquery-1.9.1.min.js"></script>
+    <script src="template.js"></script>
+    <style>
+		.p-index {
+			color: #DDD;
+			font-size: 12px;
+		}
+		.comment {
+			font-weight: 500;
+			color: blueviolet;
+			cursor: pointer;
+		}
+		.comment-detail {
+			color: darkturquoise;
+		    position: absolute;
+		    border: 1px dotted red;
+		}
+		.hidden {
+			display: none;
+		}
+		.comment-detail {
+			background-color: #ccc;
+		}
+		.comment-detail p {
+			margin: 2px 5px;
+		}
+		.comment-detail hr {margin: 2px 0}
+		.comment-detail .comment-header {
+			color: #666;
+			font-size: 12px;
+			height: 14px;
+		}
+		.comment-detail hr {
+			color: #DDD;
+		}
+		.comment-detail .comment-body {
+			height: 16px;
+			font-size: 14px;
+		}
+
+		.insert {
+			background-color: cornflowerblue;
+		}
+		.delete {
+			background-color: #ED64A3;
+			text-decoration: line-through;
+		}
+    </style>
+</head>
+<body>
+	<div id="content"></div>
+	<script id="test" type="text/html">
+	{{if isAdmin}}
+
+	<h1>{{title}}</h1>
+	<ul>
+	    {{each list as value i}}
+	        <li>索引 {{i + 1}} ：{{value}}</li>
+	    {{/each}}
+	</ul>
+
+	{{/if}}
+	</script>
+
+	<div id="word"></div>
+	<script id="test-word" type="text/html">
+		{{each pList as value i}}
+		    <p> 
+			    <span class="p-index"> 第 {{i + 1}} 段 :</span>
+			    {{each value as w i}}
+			    	{{if w.text}}
+			    		{{w.textContent}}
+			    	{{else if w.commentStart}}
+			    		{{#w.value}}
+			    	{{else if w.commentEnd}}
+			    		{{#w.value}}
+			    	{{else if w.insert}}
+			    		<span class="insert">{{w.insertContent}}</span>
+			    	{{else if w.delete}}
+			    		<span class="delete">{{w.deleteContent}}</span>
+			    	{{else}}
+			    	{{/if}}
+			    {{/each}}
+		    </p>
+		{{/each}}
+	</script>
+	<script id="comment-detail-tmpl" type="text/html">
+		<p class="comment-header">{{author}}编辑于{{date}}</p>
+		<hr>		
+		<p class="comment-body">
+			{{textContent}}
+		</p>
+		<!--<p class="comment-footer">
+			<button>接受</button>	
+			<button>拒绝</button>	
+		</p>-->
+	</script>
+	<!-- <script>
+		// 加载xml文档
+		loadXML    = function(xmlFile)
+		{
+		    var xmlDoc;
+		    if(window.ActiveXObject)
+		    {
+		        xmlDoc    = new ActiveXObject('Microsoft.XMLDOM');
+		        xmlDoc.async    = false;
+		        xmlDoc.load(xmlFile);
+		    }
+		    else if (document.implementation&&document.implementation.createDocument)
+		    {
+		    	console.log('not IE');
+		        xmlDoc    = document.implementation.createDocument('', '', null);
+		        // xmlDoc.load(xmlFile);
+		        xmlDoc = loadXMLDoc(xmlFile); 
+		    }
+		    else
+		    {
+		        return null;
+		    }
+		    
+		    return xmlDoc;
+		}
+		loadXML('./test.xml');
+	</script> -->
+	<script>
+		// 加载xml文档
+        var loadXML = function (xmlFile) {
+            var xmlDoc;
+            if (window.ActiveXObject) {
+                xmlDoc = new ActiveXObject('Microsoft.XMLDOM');//IE浏览器
+                xmlDoc.async = false;
+                xmlDoc.load(xmlFile);
+            }
+            else if (isFirefox=navigator.userAgent.indexOf("Firefox")>0) { //火狐浏览器
+            //else if (document.implementation && document.implementation.createDocument) {//这里主要是对谷歌浏览器进行处理
+                xmlDoc = document.implementation.createDocument('', '', null);
+                xmlDoc.load(xmlFile);
+            }
+            else{ //谷歌浏览器
+              var xmlhttp = new window.XMLHttpRequest();
+                xmlhttp.open("GET",xmlFile,false);
+                xmlhttp.send(null);
+                if(xmlhttp.readyState == 4){
+                	xmlDoc = xmlhttp.responseXML.documentElement;
+                } 
+            }
+            return xmlDoc;
+        };
+
+        // 首先对xml对象进行判断
+        var  checkXMLDocObj = function (xmlFile) {
+            var xmlDoc = loadXML(xmlFile);
+            if (xmlDoc == null) {
+                alert('您的浏览器不支持xml文件读取,于是本页面禁止您的操作,推荐使用IE5.0以上可以解决此问题!');
+                window.location.href = '../err.html';
+
+            }
+            return xmlDoc;
+        };
+
+        var xmlDoc =  checkXMLDocObj('test1.xml');
+        console.log(xmlDoc);
+
+        // var pkgs = xmlDoc.getElementsByTagName("pkg:part");
+        // console.log(pkgs);
+        // var pkgPart = xmlDoc.getElementsByTagName('pkg:package/pkg:part')[0].getAttribute('pkg:name');
+        // console.log(pkgPart);
+
+        //获取到XML所有子节点
+        var childrens = xmlDoc.children;
+        console.log(childrens);
+
+        //获取到文档,评论和样式的pkg
+        var obj = {};
+        for (var i = 0; i < childrens.length; i++) {
+        	var children = childrens[i];
+        	var pkgName = children.attributes[0].nodeValue;
+        	if (pkgName === '/word/document.xml') {
+        		obj.document = children;
+        	} else if (pkgName === '/word/comments.xml') {
+        		obj.comment = children;
+        	} else if (pkgName === '/word/styles.xml') {
+        		obj.styles = children;
+        	}
+        }
+        console.log(obj);
+
+        // 获取评论详情节点
+        var comments = obj.comment.children[0].childNodes[0].children;
+        console.log(comments);
+        // 获取单个评论详情：id,author,date,content
+        var commentsDetail = [];
+        for (var i = 0; i < comments.length; i++) {
+        	commentsDetail[i] = {};
+        	commentsDetail[i].commentId = comments[i].attributes[0].nodeValue;
+        	commentsDetail[i].author = comments[i].attributes[1].nodeValue;
+        	commentsDetail[i].date = comments[i].attributes[2].nodeValue;
+        	commentsDetail[i].textContent = comments[i].textContent.trim();
+        }
+        console.log(commentsDetail);
+
+        // 获取文档段落
+        var allP = obj.document.childNodes[0].children[0].children[0].children;
+        //console.log("obj.document.childNodes[0].children[0].children[0].children is "+allP);
+        // 获取到每个p的内容 顺便判断有无评论
+        var allPDetail = [];
+        for (var i = 0; i < (allP.length - 1); i++) { //最后一项位结束标志，略去
+        	//allPDetail[i].contentText = allP[i].textContent.trim();不获取整个段落的文字了，通过对段落遍历得到每个段落子内容，得到评论起始位置和ID
+        	//循环单个P的children观察是否有评论
+        	allPDetail[i] = [];
+			$.map(allP[i].children, function(value, index) {
+
+				allPDetail[i][index] = {
+					'index': index,
+					'text': false
+				};
+				if (value.nodeName === 'w:r') {
+					allPDetail[i][index].text = true;
+					allPDetail[i][index].textContent = value.textContent.trim();
+				}
+				if (value.nodeName === 'w:ins') {
+					allPDetail[i][index].insert = true;
+					allPDetail[i][index].insertContent = value.textContent.trim();
+					allPDetail[i][index].insertId = value.attributes[0].nodeValue;
+					allPDetail[i][index].insertAuthor = value.attributes[1].nodeValue;
+					allPDetail[i][index].insertDate = value.attributes[2].nodeValue;
+				}
+				if (value.nodeName === 'w:del') {
+					allPDetail[i][index].delete = true;
+					allPDetail[i][index].deleteContent = value.textContent.trim();
+					allPDetail[i][index].deleteId = value.attributes[0].nodeValue;
+					allPDetail[i][index].deleteAuthor = value.attributes[1].nodeValue;
+					allPDetail[i][index].deleteDate = value.attributes[2].nodeValue;
+				}
+				if (value.nodeName === 'w:commentRangeStart') {
+					allPDetail[i][index].commentStart = true;
+					allPDetail[i][index].commentId = value.attributes[0].nodeValue;
+					allPDetail[i][index].value = '<span class="comment" id="comment'+ allPDetail[i][index].commentId +'">';
+				}
+				if (value.nodeName === 'w:commentRangeEnd') {
+					allPDetail[i][index].commentEnd = true;
+					allPDetail[i][index].commentId = value.attributes[0].nodeValue;
+					allPDetail[i][index].value = '<span class="comment-detail hidden"></span></span>';
+				}
+			});
+        }
+        console.log(allPDetail);
+
+        $('#word').html(template('test-word',{pList: allPDetail}));
+
+        $('#word').on('click', '.comment', function(){
+        	var $this = $(this);
+        	var commentIdArray = $this.attr('id').split("");
+        	var commentId = commentIdArray.splice(7,(commentIdArray.length - 1)).join();
+        	console.log(commentId);
+			$.map(commentsDetail, function(value, i) {
+				if (value.commentId === commentId) {
+					//渲染评论详情
+					$this.find('.comment-detail').html(template('comment-detail-tmpl',value)).toggleClass('hidden');
+				}
+			});
+
+        });
+	</script>
+	<script>
+	var data = {
+		title: '基本例子',
+		isAdmin: true,
+		list: ['文艺', '博客', '摄影', '电影', '民谣', '旅行', '吉他']
+	};
+	//$('#content').html(template('test',data));
+	</script>
+
+</body>
+</html>
