@@ -45,11 +45,16 @@
 
 		.insert {
 			background-color: cornflowerblue;
+			cursor: pointer;
 		}
 		.delete {
 			background-color: #ED64A3;
+			cursor: pointer;
 			text-decoration: line-through;
 		}
+		.operate {position: absolute;}
+		.operate-yes {}
+		.operate-no {}
     </style>
 </head>
 <body>
@@ -80,9 +85,17 @@
 			    	{{else if w.commentEnd}}
 			    		{{#w.value}}
 			    	{{else if w.insert}}
-			    		<span class="insert">{{w.insertContent}}</span>
+			    		<span class="insert" id="{{w.insertId}}">{{w.insertContent}}</span>
+			    		<span class="operate hidden">
+			    			<button class="operate-yes" onclick="insertOperate({{w.insertId}},1)">确认添加</button>	
+							<button class="operate-no" onclick="insertOperate({{w.insertId}},0)">舍弃添加</button>
+			    		</span>
 			    	{{else if w.delete}}
-			    		<span class="delete">{{w.deleteContent}}</span>
+			    		<span class="delete" id="{{w.deleteId}}">{{w.deleteContent}}</span>
+			    		<span class="operate hidden">
+			    			<button class="operate-yes" onclick="deleteOperate({{w.deleteId}},1)">确认删除</button>	
+							<button class="operate-no" onclick="deleteOperate({{w.deleteId}},0)">保留</button>
+			    		</span>
 			    	{{else}}
 			    	{{/if}}
 			    {{/each}}
@@ -266,6 +279,40 @@
 			});
 
         });
+
+        //操作插入删除,情况：仅插入，仅删除，替换
+        $('.delete').click(function(){
+        	var $this = $(this);
+			var deleteId = $this.attr('id');
+			$this.next('.operate').toggleClass('hidden');
+        });
+        $('.insert').click(function(){
+        	var $this = $(this);
+			var insertId = $this.attr('id');
+			$this.next('.operate').toggleClass('hidden');
+        });
+        function insertOperate(id,type) {
+        	var insertId = '#' + id;
+        	if (type === 1) {
+        		//确认添加
+        		$(insertId).removeClass('insert').next('.operate').remove();
+        	} else if(type === 0) {
+        		//不添加
+        		$(insertId).next('.operate').remove();
+        		$(insertId).remove();
+        	}
+        }
+        function deleteOperate(id,type) {
+        	var deleteId = '#' + id;
+        	if (type === 1) {
+        		//确认删除
+        		$(deleteId).next('.operate').remove();
+        		$(deleteId).remove();
+        	} else if(type === 0) {
+        		//不删除
+        		$(deleteId).removeClass('delete').next('.operate').remove();
+        	}
+        }
 	</script>
 	<script>
 	var data = {
