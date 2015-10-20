@@ -5,6 +5,8 @@
 	<title>xml</title>
     <script src="jquery-1.9.1.min.js"></script>
     <script src="template.js"></script>
+    <script src="bootstrap.min.js"></script>
+    <link rel="stylesheet" href="bootstrap.min.css"></link>
     <style>
 		.p-index {
 			color: #DDD;
@@ -55,27 +57,217 @@
 		.operate {position: absolute;}
 		.operate-yes {}
 		.operate-no {}
+		
+		/*.change-tip {
+			font-size: small;
+			color: tomato;
+		}*/
+		.change-tip button{
+			font-size: x-small;
+			color: darksalmon;
+		}
+		.main {
+			width: 100%;
+		}
+		.main div {
+			float: left;
+		}
+		#word {width:50%;margin:0 15px}
+		#side {
+			width: 45%;
+			padding-left: 15px;
+		}
+		#side div {float: none;}
+		.vertical-line {
+			display: inline-block;
+			position: absolute;
+			top:0;
+			bottom: 0;
+			border-left: 2px #CCC dotted;
+		}
+
+		.oldEva {
+
+		}
+		.newEva {
+			text-align: center;
+			border: 2px solid #CCC;
+			margin-top: 20px;
+		}
+
+		.every-comment {
+			border: 1px solid #333;
+		}
+		.comment-header {
+
+		}
+		.comment-body {
+			margin-left: 20px;
+		}
     </style>
 </head>
 <body>
+	<!-- Modal -->
+	<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+	  <div class="modal-dialog" role="document">
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+	        <h4 class="modal-title" id="myModalLabel">Title</h4>
+	      </div>
+	      <div class="modal-body">
+	        <form class="form-horizontal">
+		        <div class="form-group">
+				    <label class="col-sm-3 control-label">陈述原因：</label>
+				    <div class="col-sm-9">
+				    	<textarea class="form-control reason" rows="3"></textarea>
+				    </div>
+				</div>
+				<div class="form-group">
+				    <label class="col-sm-3 control-label">错误评级：</label>
+				    <div class="col-sm-9">
+					    <select class="form-control wrongLevel">
+						    <option value="A1">A1</option>
+							<option value="A2">A2</option>
+							<option value="A3">A3</option>
+							<option value="B1">B1</option>
+							<option value="B2">B2</option>
+							<option value="B3">B3</option>
+							<option value="C1">C1</option>
+							<option value="C2">C2</option>
+							<option value="C3">C3</option>
+						</select>
+					</div>
+				</div>
+	        </form>
+
+	      </div>
+	      <div class="modal-footer">
+	        <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+	        <button type="button" class="btn btn-primary" onclick="addComment()">确定</button>
+	      </div>
+	    </div>
+	  </div>
+	</div>
+
+	<canvas style='display:none'></canvas>
 	<div id="content"></div>
 	<script id="test" type="text/html">
-	{{if isAdmin}}
+		{{if isAdmin}}
 
-	<h1>{{title}}</h1>
-	<ul>
-	    {{each list as value i}}
-	        <li>索引 {{i + 1}} ：{{value}}</li>
-	    {{/each}}
-	</ul>
+		<h1>{{title}}</h1>
+		<ul>
+		    {{each list as value i}}
+		        <li>索引 {{i + 1}} ：{{value}}</li>
+		    {{/each}}
+		</ul>
 
-	{{/if}}
+		{{/if}}
 	</script>
 
-	<div id="word"></div>
+	<script id="comment-table-tmpl" type="text/html">
+		<h4>列表</h4>
+		{{each comments as comment i}}	
+	    <div class="every-comment">
+	    	<div class="comment-header">
+	    		<strong>{{i + 1}}.</strong> {{comment.location}}
+	    		<span class="text-right">错误等级：{{comment.wrongLevel}}</span>
+	    	</div>
+	    	<div class="comment-body">
+	  	    <blockquote>
+	  			  {{if comment.changeType === 'insert'}}
+	  			  	<footer><cite title="Source Title">插入内容</cite></footer>
+	  			  	<p>{{comment.nowComment}}</p>
+	  			  {{else if comment.changeType === 'delete'}}
+	  			  	<footer><cite title="Source Title">删除内容</cite></footer>
+	  			  	<p>{{comment.oldComment}}</p>
+	  			  {{else if comment.changeType === 'replace'}}
+	  			  	<footer><cite title="Source Title">现内容</cite></footer>
+	  			  	<p>{{comment.nowComment}}</p>
+	  			  	<hr>
+	  			  	<footer><cite title="Source Title">原内容</cite></footer>
+	  			  	<p>{{comment.oldComment}}</p>
+	  			  {{/if}}
+	  			</blockquote>
+	  			<div>
+	  				修改原因：
+	  				<p>{{comment.reason}}</p>
+	  			</div>
+	  		</div>
+	    </div>
+	  {{/each}}
+	</script>
+	
+
+	<div class="main">
+		<div id="word"></div>
+		<div class="vertical-line"></div>
+		<div id="side">
+			<div id="comment-table"></div>
+			<!-- <table class="table table-condensed table-striped" id="comment-table">
+				<tr>
+					<th>位置</th>
+					<th>原内容</th>
+					<th>现内容</th>
+					<th>修改原因</th>
+					<th>错误等级</th>
+				</tr>
+				{{each comments as comment i}}	
+					<tr>
+						<td>{{comment.location}}</td>
+						<td>{{comment.oldComment}}</td>
+						<td>{{comment.nowComment}}</td>
+						<td>{{comment.reason}}</td>
+						<td>{{comment.wrongLevel}}</td>
+					</tr>
+			    {{/each}}
+			</table> -->
+			<!-- 过往评论 -->
+			<!-- <h4>针对第4段ID为3的评价</h4> -->
+			<!-- <div class="oldEva">
+				<div class="left">
+					<div class="evaAuthor">王律师： "我是这么认为的那你看撒科技部奋斗吧,毕竟伤口减肥吧九棵树不废江河手打版AK两部分等候服!"</div>
+					<div class="evaContent"></div>
+				</div>
+				<div class="right">
+					<div>评级： C1</div>
+					<div class="evaClass"></div>
+				</div>
+			</div> -->
+			<!-- 新建评价 -->
+			<!-- <div class="newEva">
+				<span>添加你的评价：</span>
+				<div class="left">
+					<input type="text" placeholder="请填写你的评价">
+				</div>
+				<div class="right">
+					<div></div>
+					<div class="evaClass">
+					评级：
+						<select name="" id="">
+							<option value="">A1</option>
+							<option value="">A2</option>
+							<option value="">A3</option>
+							<option value="">B1</option>
+							<option value="">B2</option>
+							<option value="">B3</option>
+							<option value="">C1</option>
+							<option value="">C2</option>
+							<option value="">C3</option>
+						</select>
+					</div>
+				</div>
+				<button>提交</button>
+			</div> -->
+		</div>
+	</div>
+	
+	<script id="side-word" type="text/html">
+	</script>
+
 	<script id="test-word" type="text/html">
 		{{each pList as value i}}
-		    <p> 
+		    <p id='p{{i+1}}'> 
 			    <span class="p-index"> 第 {{i + 1}} 段 :</span>
 			    {{each value as w i}}
 			    	{{if w.text}}
@@ -85,16 +277,35 @@
 			    	{{else if w.commentEnd}}
 			    		{{#w.value}}
 			    	{{else if w.insert}}
-			    		<span class="insert" id="{{w.insertId}}">{{w.insertContent}}</span>
-			    		<span class="operate hidden">
-			    			<button class="operate-yes" onclick="insertOperate({{w.insertId}},1)">确认添加</button>	
-							<button class="operate-no" onclick="insertOperate({{w.insertId}},0)">舍弃添加</button>
+			    		<span class="change-tip" change-type="insert">	
+			    			<span class="insert" id="{{w.insertId}}">{{w.insertContent}}</span>
+			    		
+			    			<button changeId="{{w.insertId}}" title-info="第{{w.location.duan}}段,第{{w.location.chu}}处" class='operate-comment' data-toggle="modal" data-target="#myModal" >评价</button>
 			    		</span>
 			    	{{else if w.delete}}
-			    		<span class="delete" id="{{w.deleteId}}">{{w.deleteContent}}</span>
-			    		<span class="operate hidden">
-			    			<button class="operate-yes" onclick="deleteOperate({{w.deleteId}},1)">确认删除</button>	
-							<button class="operate-no" onclick="deleteOperate({{w.deleteId}},0)">保留</button>
+			    		<span class="change-tip" change-type="delete">
+			    			<span class="delete" id="{{w.deleteId}}">{{w.deleteContent}}</span>
+			    		
+			    			<button changeId="{{w.deleteId}}" class='operate-comment' title-info="第{{w.location.duan}}段,第{{w.location.chu}}处" data-toggle="modal" data-target="#myModal">评价</button>
+		    			</span>
+			    	{{else if w.change}}
+			    	<!--查看ID为{{w.deleteId}}  查看ID为{{w.insertId}}-->
+			    		<span class="change-tip" change-type="replace">
+			    			{{if w.insertBeforeDelete}}
+			    			
+			    				<span class="insert" id="{{w.insertId}}">{{w.insertContent}}</span>
+			    				<span class="delete" id="{{w.deleteId}}">{{w.deleteContent}}</span>
+			    			
+			    				<button changeId="{{w.deleteId}}" title-info="第{{w.location.duan}}段,第{{w.location.chu}}处" class='operate-comment' data-toggle="modal" data-target="#myModal">评价</button>
+			    			
+			    			{{else}}
+			    			
+			    				<span class="delete" id="{{w.deleteId}}">{{w.deleteContent}}</span>
+			    				<span class="insert" id="{{w.insertId}}">{{w.insertContent}}</span>
+			    			
+			    				<button changeId="{{w.insertId}}" class='operate-comment' title-info="第{{w.location.duan}}段,第{{w.location.chu}}处" data-toggle="modal" data-target="#myModal">评价</button>
+			    			
+			    			{{/if}}
 			    		</span>
 			    	{{else}}
 			    	{{/if}}
@@ -263,6 +474,62 @@
 			});
         }
         console.log(allPDetail);
+        //处理allPDetail以合并替换情况时的insert和delete
+        $.map(allPDetail, function(pDetail, index){
+        	for (var i=1;i<pDetail.length;i++) {
+        		if(!(pDetail[i].text || pDetail[i-1].text)){
+        			// 创建新的数组元素来合并i和i-1
+        			if (pDetail[i].insert || pDetail[i].delete) {
+        				var obj = {
+	        				'change': true,
+	        				'text': false,
+	        				'author': '',
+	        				'date': '',
+	        				'index': i-1,
+	        				'deleteContent': '',
+	        				'deleteId': '',
+	        				'insertContent': '',
+	        				'insertId': '',
+	        				'insertBeforeDelete': true
+	        			};
+	        			if(typeof(pDetail[i].insert) !== 'undefined'){
+	        				obj.author = pDetail[i].insertAuthor;
+	        				obj.date = pDetail[i].insertDate;
+	        				obj.insertId = pDetail[i].insertId;
+	        				obj.insertContent = pDetail[i].insertContent;
+	        				obj.deleteId = pDetail[i-1].deleteId;
+	        				obj.deleteContent = pDetail[i-1].deleteContent;
+	        				obj.insertBeforeDelete = false;
+	        			}else{
+	        				obj.author = pDetail[i].deleteAuthor;
+	        				obj.date = pDetail[i].deleteDate;
+	        				obj.insertId = pDetail[i-1].insertId;
+	        				obj.insertContent = pDetail[i-1].insertContent;
+	        				obj.deleteId = pDetail[i].deleteId;
+	        				obj.deleteContent = pDetail[i].deleteContent;
+	        			}
+	        			pDetail.splice(i-1,2,obj);
+        			}
+        			
+        		}
+        	}
+        });
+		console.log(allPDetail);
+
+		//设置标志位 对所有情况的记录顺序
+		$.map(allPDetail, function(pDetail, index){
+			var chu=1, duan=index+1;
+			$.map(pDetail, function(detail, i){
+				if(detail.text === false){
+					detail.location = {
+						'duan': duan,
+						'chu': chu 
+					};
+					chu++;
+				}
+			});
+		});
+		console.log(allPDetail);
 
         $('#word').html(template('test-word',{pList: allPDetail}));
 
@@ -270,7 +537,7 @@
         	var $this = $(this);
         	var commentIdArray = $this.attr('id').split("");
         	var commentId = commentIdArray.splice(7,(commentIdArray.length - 1)).join();
-        	console.log(commentId);
+        	//console.log(commentId);
 			$.map(commentsDetail, function(value, i) {
 				if (value.commentId === commentId) {
 					//渲染评论详情
@@ -279,6 +546,64 @@
 			});
 
         });
+
+        var comments = [];
+        var comment = {};
+        var i=0;
+        $('.operate-comment').click(function(){
+        	//   获取这些信息
+		    // comment.location
+			// comment.oldComment
+			// comment.nowComment
+			// comment.reason
+			// comment.wrongLevel
+			var $this = $(this);
+			
+			var title = $this.attr('title-info');
+			comment.location = title;
+			$('.modal-title').text(title);
+			var changeNode = $this.parent();
+			var changeType = changeNode.attr('change-type');
+			comment.oldComment = '';
+			comment.nowComment = '';
+			if(changeType === 'delete'){
+				comment.changeType = 'delete';
+				comment.oldComment = changeNode.children('.delete').text();
+			}else if(changeType === 'insert'){
+				comment.changeType = 'insert';
+				comment.nowComment = changeNode.children('.insert').text();
+			}else if(changeType === 'replace'){
+				comment.changeType = 'replace';
+				comment.oldComment = changeNode.children('.delete').text();
+				comment.nowComment = changeNode.children('.insert').text();
+			}
+
+        });
+        function addComment(){
+        	comment.reason = $('.reason').val();
+			comment.wrongLevel = $('.wrongLevel').val();
+			if(comment.reason === ''){
+				alert('原因不能为空！');
+			}else{
+				//i++;
+				//comments.push(comment);
+				comments[i] = {};
+				comments[i].location = comment.location;
+				comments[i].oldComment = comment.oldComment;
+				comments[i].nowComment = comment.nowComment;
+				comments[i].reason = comment.reason;
+				comments[i].wrongLevel = comment.wrongLevel;
+				comments[i].changeType = comment.changeType;
+				i++;
+
+				$('#comment-table').html(template('comment-table-tmpl',{comments: comments}));
+				$('.reason').val('');
+				$('.wrongLevel').val('A1');	
+				$('#myModal').modal('hide');
+			}
+			
+        }
+
 
         //操作插入删除,情况：仅插入，仅删除，替换
         $('.delete').click(function(){
@@ -313,13 +638,53 @@
         		$(deleteId).removeClass('delete').next('.operate').remove();
         	}
         }
+
+
+        //获取样式信息
+        var allStyle = obj.styles.childNodes[0].children[0].children;
+        console.log(allStyle)
+
+
+        //划线
+   //      function draw(id) {
+   //      	//x,y也是要动态获取的
+   //      	var x = 1017.59375, y=50;
+   //      	var x1 = $('#'+id)[0].getBoundingClientRect().right;
+   //      	var y1 = $('#'+id)[0].getBoundingClientRect().top;
+
+   //      	var height = y1;
+   //      	var width = x - x1;
+
+			// //设置canvas的具体位置
+			// var canvas = $('canvas');
+			// canvas.css({
+			// 	'display': 'block',
+			// 	'position': 'absolute',
+			// 	'left': x1,
+			// 	'height': height,
+			// 	'width': width
+			// });
+
+			// //画一条线
+   //      	var context = canvas[0].getContext('2d');
+
+   //          //draw line
+   //          context.beginPath();
+   //          context.moveTo(0,height-60);
+   //          context.lineTo(width,0);
+   //          context.closePath();
+   //          //ink line
+   //          context.lineWidth = 2;
+   //          context.strokeStyle = "#000"; //black
+   //          context.stroke();
+   //      }
 	</script>
 	<script>
-	var data = {
-		title: '基本例子',
-		isAdmin: true,
-		list: ['文艺', '博客', '摄影', '电影', '民谣', '旅行', '吉他']
-	};
+	// var data = {
+	// 	title: '基本例子',
+	// 	isAdmin: true,
+	// 	list: ['文艺', '博客', '摄影', '电影', '民谣', '旅行', '吉他']
+	// };
 	//$('#content').html(template('test',data));
 	</script>
 
