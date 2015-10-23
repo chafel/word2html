@@ -31,25 +31,48 @@
       .main div {
         float: left;
       }
-      #word {width:50%;margin:0 15px}
+      #word {
+      	width: 50%; 
+      	margin:0 15px;
+      	height: 100%;
+      	overflow-y: auto;
+      	position: fixed;
+		    left: 0; 
+      }
       #side {
-        width: 45%;
+        width: 48%;
         padding-left: 15px;
+        position: fixed;
+		    right: 0;
+		    height: 100%;
+		    overflow-y: auto;
+		    border-left: 2px dotted #333;
       }
       #side div {float: none;}
-      .vertical-line {
+      /*.vertical-line {
         display: inline-block;
         position: absolute;
         top:0;
         bottom: 0;
         border-left: 2px #CCC dotted;
+      }*/
+      .every-comment {
+		    border: 1px solid #e1e1e8;
+		    border-radius: 4px;
+		    margin: 0 15px 15px 0;
+      }
+      .comment-header {
+  	    background-color: #f7f7f9;
+  	    padding: 5px 10px;
+      }
+      .comment-body {
+      	padding: 5px 10px;
       }
     </style>
   </head>
   <body>
 		<div class="main">
       <div id="word"></div>
-      <div class="vertical-line"></div>
       <div id="side">
         <div id="comment-table"></div>
       </div>
@@ -101,7 +124,7 @@
       {{each comments as comment i}}  
         <div class="every-comment">
           <div class="comment-header">
-            <strong>{{i + 1}}.</strong> {{comment.position}}
+            <strong>{{i + 1}}. {{comment.position}}</strong> 
             <span class="text-right">错误等级：{{comment.wrongLevel}}</span>
           </div>
           <div class="comment-body">
@@ -121,7 +144,7 @@
               {{/if}}
             </blockquote>
             <div>
-              修改原因：
+              <i>修改原因：</i>
               <p>{{comment.reason}}</p>
             </div>
           </div>
@@ -420,7 +443,7 @@
           alert('原因不能为空！');
         }else{
           comments[i] = {};
-          comments[i].location = comment.location;
+          comments[i].position = comment.position;
           comments[i].oldComment = comment.oldComment;
           comments[i].nowComment = comment.nowComment;
           comments[i].reason = comment.reason;
@@ -432,6 +455,9 @@
           $('.reason').val('');
           $('.wrongLevel').val('A1'); 
           $('#myModal').modal('hide');
+          console.log(comment);
+          console.log(comments)
+
         }
       }
 
