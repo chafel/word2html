@@ -6,12 +6,12 @@ Save word as xml, transform the xml result to html with the xml document object 
 ``
    python -m SimpleHTTPServer 8000
 ``
-2. open your browser(chrome was been recommend) and have a look, the URLis
+2. open your browser(chrome was been recommend) and have a look, the URL should be
 ``
    http://localhost:8000/
 ``
 
 ## To do
 * modulize
-* split sigle file
-* more operation with xml file 
+* split single file
+* more operations with xml file 
